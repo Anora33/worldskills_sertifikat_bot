@@ -256,18 +256,32 @@ async def get_diploma(msg, state):
         diploma = ""
     await state.update_data(diploma_specialty=diploma)
     payment = """
+payment_text = """
+payment_text = """
 💰 *Milliy Worldskills Ekspert-2026*
 
 📚 *O'qish puli:* 1 000 000 so'm
 
+🏢 *"ISHCHI KASBLARNI RIVOJLANTIRISH VA OMMALASHTIRISH AKADEMIYASI" MChJ*
+
 🏦 *Bank rekvizitlari:*
 • INN: 308344436
 • Bank: AKB "Kapitalbank" Mirzo Ulug'bek tuman filiali
-• Hisob: 20208000305369587001
+• MFO: 01018
+• Hisob raqam: 20208000305369587001
 
+📧 *Email:* dadaxon45@gmail.com
 📞 *Telefon:* +998 93 340 40 80
 
-✅ *To'lovni amalga oshirgandan so'ng, kvitansiyani yuboring!*
+📝 *To'lov maqsadi:* Ekspertlikka o'qish uchun
+
+📄 *Shartnoma raqami:* 22011956 (O'zingizning tug'ilgan sanaoyyilingiz)
+
+📅 *Sana:* 22.04.2026
+
+✅ *To'lovni amalga oshirgandan so'ng, kvitansiyani shu botga yuboring!*
+
+🔐 *Kvitansiya tekshirilgandan so'ng siz yopiq guruhga qo'shilasiz.*
 """
     await msg.answer(payment, parse_mode="Markdown")
     await msg.answer("📎 *Kvitansiyangizni yuklang (rasm yoki PDF formatida):*", parse_mode="Markdown")
