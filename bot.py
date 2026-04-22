@@ -283,10 +283,22 @@ payment_text = """
 
 🔐 *Kvitansiya tekshirilgandan so'ng siz yopiq guruhga qo'shilasiz.*
 """
-    await msg.answer(payment, parse_mode="Markdown")
-    await msg.answer("📎 *Kvitansiyangizni yuklang (rasm yoki PDF formatida):*", parse_mode="Markdown")
-    await state.set_state(Form.receipt)
 
+
+@dp.message(Form.diploma_specialty)
+async def get_diploma(msg, state):
+    diploma = msg.text.strip()
+    if diploma == "-":
+        diploma = ""
+    await state.update_data(diploma_specialty=diploma)
+    payment = """
+    💰 *Milliy Worldskills Ekspert-2026*
+    ...
+    """
+    await msg.answer(payment,
+                     parse_mode="Markdown")  # <-- Bu qatorning oldida 4 ta probel (yoki bitta tab) bo‘lishi kerak
+    await msg.answer("📎 *Kvitansiyangizni yuklang...*", parse_mode="Markdown")
+    await state.set_state(Form.receipt)
 @dp.message(Form.receipt, F.photo | F.document)
 async def get_receipt(msg, state):
     data = await state.get_data()
