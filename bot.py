@@ -129,9 +129,48 @@ storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 init_db()
 
-PROFESSIONS_UZ = ["1. Elektromontaj", "2. Payvandlash", "3. Santexnika", "4. Quruq qurilish", "5. Kompyuter grafikasi", "6. Modalar texnologiyasi", "7. Avtomobillarga xizmat", "8. Sartaroshlik", "9. Tibbiy g'amxo'rlik", "10. Oshpazlik"]
-PROFESSIONS_EN = ["1. Electrical Installation", "2. Welding", "3. Plumbing", "4. Dry Construction", "5. Computer Graphics", "6. Fashion Technology", "7. Automotive Maintenance", "8. Hairdressing", "9. Medical Care", "10. Culinary Arts"]
-REGIONS = ["Qoraqalpog'iston", "Andijon", "Buxoro", "Jizzax", "Qashqadaryo", "Navoiy", "Namangan", "Samarqand", "Sirdaryo", "Surxondaryo", "Toshkent vil.", "Farg'ona", "Xorazm", "Toshkent sh."]
+PROFESSIONS_UZ = [
+    "1. Elektromontaj",
+    "2. Payvandlash",
+    "3. Santexnika",
+    "4. Quruq qurilish va suvoq ishlari",
+    "5. Kompyuter grafikasi va dizayn",
+    "6. Modalar texnologiyasi",
+    "7. Avtomobillarga texnik xizmat ko'rsatish",
+    "8. Sartaroshlik",
+    "9. Tibbiy va ijtimoiy g'amxo'rlik",
+    "10. Oshpazlik"
+]
+
+PROFESSIONS_EN = [
+    "1. Electrical Installation",
+    "2. Welding",
+    "3. Plumbing",
+    "4. Dry Construction and Plastering",
+    "5. Computer Graphics and Design",
+    "6. Fashion Technology",
+    "7. Automotive Maintenance",
+    "8. Hairdressing",
+    "9. Medical and Social Care",
+    "10. Culinary Arts"
+]
+
+REGIONS = [
+    "Qoraqalpog'iston Respublikasi",
+    "Andijon viloyati",
+    "Buxoro viloyati",
+    "Jizzax viloyati",
+    "Qashqadaryo viloyati",
+    "Navoiy viloyati",
+    "Namangan viloyati",
+    "Samarqand viloyati",
+    "Sirdaryo viloyati",
+    "Surxondaryo viloyati",
+    "Toshkent viloyati",
+    "Farg'ona viloyati",
+    "Xorazm viloyati",
+    "Toshkent shahri"
+]
 
 class Form(StatesGroup):
     name = State()
@@ -145,66 +184,83 @@ class Form(StatesGroup):
     diploma_specialty = State()
     receipt = State()
 
-def phone_kb(): 
+def phone_kb():
     btn = KeyboardButton(text="📱 Telefon raqamni yuborish", request_contact=True)
     return ReplyKeyboardMarkup(keyboard=[[btn]], resize_keyboard=True)
 
-def lang_kb(): 
+def lang_kb():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🇺🇿 O'zbek", callback_data="lang_uz"),
-         InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
+        [InlineKeyboardButton(text="🇺🇿 O'zbek tili", callback_data="lang_uz")],
+        [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
     ])
 
-def prof_kb(lang="uz"): 
+def prof_kb(lang="uz"):
     proflar = PROFESSIONS_UZ if lang == "uz" else PROFESSIONS_EN
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=p, callback_data=f"prof_{i}")] for i, p in enumerate(proflar)])
+    keyboard = [[InlineKeyboardButton(text=p, callback_data=f"prof_{i}")] for i, p in enumerate(proflar)]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-def region_kb(): 
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=r, callback_data=f"region_{i}")] for i, r in enumerate(REGIONS)])
+def region_kb():
+    keyboard = [[InlineKeyboardButton(text=r, callback_data=f"region_{i}")] for i, r in enumerate(REGIONS)]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 @dp.message(Command("start"))
-async def start(msg, state):
-    await msg.answer("🏆 *WorldSkills botiga xush kelibsiz!*\n\n✏️ *Ismingizni kiriting:*\n_(Masalan: Jahongir)_", parse_mode="Markdown")
+async def start(msg: types.Message, state: FSMContext):
+    await msg.answer(
+        "🏆 *WorldSkills Sertifikat Botiga xush kelibsiz!*\n\n"
+        "Milliy Worldskills Ekspert-2026 dasturiga ro'yxatdan o'tish.\n\n"
+        "✏️ *Ismingizni kiriting:*\n_(Masalan: Jahongir)_",
+        parse_mode="Markdown"
+    )
     await state.set_state(Form.name)
 
 @dp.message(Form.name)
-async def get_name(msg, state):
+async def get_name(msg: types.Message, state: FSMContext):
     if len(msg.text.strip()) < 2:
-        await msg.answer("❌ Ism 2 harfdan kam bo'lmasligi kerak!")
+        await msg.answer("❌ Ism 2 harfdan kam bo'lmasligi kerak. Qaytadan kiriting:")
         return
     await state.update_data(name=msg.text.strip())
-    await msg.answer("✏️ *Familiyangizni kiriting:*\n_(Masalan: Karimov)_", parse_mode="Markdown")
+    await msg.answer(
+        "✏️ *Familiyangizni kiriting:*\n_(Masalan: Karimov)_",
+        parse_mode="Markdown"
+    )
     await state.set_state(Form.lastname)
 
 @dp.message(Form.lastname)
-async def get_lastname(msg, state):
+async def get_lastname(msg: types.Message, state: FSMContext):
     if len(msg.text.strip()) < 2:
-        await msg.answer("❌ Familiya 2 harfdan kam bo'lmasligi kerak!")
+        await msg.answer("❌ Familiya 2 harfdan kam bo'lmasligi kerak. Qaytadan kiriting:")
         return
     await state.update_data(lastname=msg.text.strip())
-    await msg.answer("📅 *Tug'ilgan kuningizni kiriting:*\n_(Masalan: 22.01.1989)_", parse_mode="Markdown")
+    await msg.answer(
+        "📅 *Tug'ilgan kuningizni kiriting:*\n_(Masalan: 22.01.1989)_",
+        parse_mode="Markdown"
+    )
     await state.set_state(Form.birth_date)
 
 @dp.message(Form.birth_date)
-async def get_birth(msg, state):
+async def get_birth(msg: types.Message, state: FSMContext):
     if not re.match(r'\d{2}\.\d{2}\.\d{4}', msg.text.strip()):
         await msg.answer("❌ Noto'g'ri format! Iltimos, 22.01.1989 ko'rinishida yozing.")
         return
     await state.update_data(birth_date=msg.text.strip())
-    await msg.answer("📱 *Telefon raqamingizni yuboring:*\n\n✅ Pastdagi tugmani bosing YOKI qo'lda yozing", reply_markup=phone_kb(), parse_mode="Markdown")
+    await msg.answer(
+        "📱 *Telefon raqamingizni yuboring:*\n\n✅ Pastdagi tugmani bosing YOKI\n✏️ Qo'lda yozing (masalan: +998901234567)",
+        parse_mode="Markdown",
+        reply_markup=phone_kb()
+    )
     await state.set_state(Form.phone)
 
 @dp.message(Form.phone, F.contact)
-async def get_phone_contact(msg, state):
+async def get_phone_contact(msg: types.Message, state: FSMContext):
     await state.update_data(phone=msg.contact.phone_number)
     await msg.answer("📍 *Viloyatingizni tanlang:*", parse_mode="Markdown", reply_markup=region_kb())
     await state.set_state(Form.region)
 
 @dp.message(Form.phone)
-async def get_phone_manual(msg, state):
+async def get_phone_manual(msg: types.Message, state: FSMContext):
     phone = msg.text.strip()
-    if len(phone) < 9:
-        await msg.answer("❌ Noto'g'ri raqam! Qaytadan kiriting.")
+    if len(phone) < 9 or not any(c.isdigit() for c in phone):
+        await msg.answer("❌ Noto'g'ri telefon raqam! Qaytadan kiriting:")
         return
     if not phone.startswith('+'):
         phone = '+998' + phone[-9:] if len(phone) == 9 else phone
@@ -213,49 +269,63 @@ async def get_phone_manual(msg, state):
     await state.set_state(Form.region)
 
 @dp.callback_query(Form.region, F.data.startswith("region_"))
-async def get_region(call, state):
+async def get_region(call: types.CallbackQuery, state: FSMContext):
     idx = int(call.data.split("_")[1])
-    await state.update_data(region=REGIONS[idx])
+    region = REGIONS[idx]
+    await state.update_data(region=region)
     await call.message.delete()
-    await call.message.answer("🌐 *Tilni tanlang:*", parse_mode="Markdown", reply_markup=lang_kb())
+    await call.message.answer(
+        "🌐 *Tilni tanlang:*",
+        parse_mode="Markdown",
+        reply_markup=lang_kb()
+    )
     await state.set_state(Form.language)
     await call.answer()
 
 @dp.callback_query(Form.language, F.data.startswith("lang_"))
-async def get_lang(call, state):
-    lang = "uz" if call.data == "lang_uz" else "en"
-    await state.update_data(language=lang)
-    text = "👨‍💼 *Kasbingizni tanlang:*" if lang == "uz" else "👨‍💼 *Select your profession:*"
-    await call.message.edit_text(text, parse_mode="Markdown", reply_markup=prof_kb(lang))
+async def process_language(call: types.CallbackQuery, state: FSMContext):
+    language = "uz" if call.data == "lang_uz" else "en"
+    await state.update_data(language=language)
+    text = "👨‍💼 *Kasbingizni tanlang:*" if language == "uz" else "👨‍💼 *Select your profession:*"
+    await call.message.edit_text(text, parse_mode="Markdown", reply_markup=prof_kb(language))
     await state.set_state(Form.profession)
     await call.answer()
 
 @dp.callback_query(Form.profession, F.data.startswith("prof_"))
-async def get_prof(call, state):
+async def get_profession(call: types.CallbackQuery, state: FSMContext):
     idx = int(call.data.split("_")[1])
-    data = await state.get_data()
-    lang = data.get("language", "uz")
-    prof_uz = PROFESSIONS_UZ[idx]
-    prof_en = PROFESSIONS_EN[idx]
-    await state.update_data(profession=prof_uz, profession_en=prof_en)
+    user_data = await state.get_data()
+    language = user_data.get("language", "uz")
+    
+    profession_uz = PROFESSIONS_UZ[idx]
+    profession_en = PROFESSIONS_EN[idx]
+    await state.update_data(profession=profession_uz, profession_en=profession_en)
+    
     await call.message.delete()
-    await call.message.answer("🏢 *Ish joyingiz / Tashkilotingiz nomini yozing:*", parse_mode="Markdown")
+    await call.message.answer(
+        "🏢 *Ish joyingiz / Tashkilotingiz nomini yozing:*\n_(Masalan: Toshkent shahar 1-son maktab)_",
+        parse_mode="Markdown"
+    )
     await state.set_state(Form.organization)
     await call.answer()
 
 @dp.message(Form.organization)
-async def get_org(msg, state):
+async def get_organization(msg: types.Message, state: FSMContext):
     await state.update_data(organization=msg.text.strip())
-    await msg.answer("📜 *Diplom bo'yicha mutaxassisligingiz (agar mavjud bo'lsa, bo'sh qoldiring):*", parse_mode="Markdown")
+    await msg.answer(
+        "📜 *Diplom bo'yicha mutaxassisligingiz (agar mavjud bo'lsa):*\n_(Bo'sh qoldirishingiz mumkin yoki '-' yozing)_",
+        parse_mode="Markdown"
+    )
     await state.set_state(Form.diploma_specialty)
 
 @dp.message(Form.diploma_specialty)
-async def get_diploma(msg, state):
+async def get_diploma(msg: types.Message, state: FSMContext):
     diploma = msg.text.strip()
     if diploma == "-":
         diploma = ""
     await state.update_data(diploma_specialty=diploma)
-    payment = """
+    
+    payment_text = """
 💰 *Milliy Worldskills Ekspert-2026*
 
 📚 *O'qish puli:* 1 000 000 so'm
@@ -281,12 +351,13 @@ async def get_diploma(msg, state):
 
 🔐 *Kvitansiya tekshirilgandan so'ng siz yopiq guruhga qo'shilasiz.*
 """
-    await msg.answer(payment, parse_mode="Markdown")
+    
+    await msg.answer(payment_text, parse_mode="Markdown")
     await msg.answer("📎 *Kvitansiyangizni yuklang (rasm yoki PDF formatida):*", parse_mode="Markdown")
     await state.set_state(Form.receipt)
 
 @dp.message(Form.receipt, F.photo | F.document)
-async def get_receipt(msg, state):
+async def get_receipt(msg: types.Message, state: FSMContext):
     data = await state.get_data()
     file_id = msg.photo[-1].file_id if msg.photo else msg.document.file_id
     
@@ -307,85 +378,114 @@ async def get_receipt(msg, state):
     
     await msg.answer(
         f"✅ *Kvitansiyangiz qabul qilindi!*\n\n"
-        f"📋 Iltimos, quyidagi havola orqali Google Formni to'ldiring:\n"
-        f"[Google Formni to'ldirish]({form_link})\n\n"
+        f"📋 Iltimos, quyidagi havola orqali Google Formni to'ldiring:\n\n"
+        f"🔗 [Google Formni to'ldirish]({form_link})\n\n"
+        f"*Eslatma:* Ma'lumotlaringiz avtomatik to'ldirilgan. Faqat tekshirib \"Submit\" tugmasini bosing.\n\n"
         f"Admin tekshiruvidan so'ng sizga xabar beriladi.",
         parse_mode="Markdown",
         disable_web_page_preview=True
     )
     
-    for aid in ADMIN_IDS:
+    for admin_id in ADMIN_IDS:
         try:
-            text = f"🆕 *YANGI ARIZA!*\n\n👤 {data.get('name')} {data.get('lastname')}\n📅 {data.get('birth_date')}\n📱 {data.get('phone')}\n📍 {data.get('region')}\n👨‍💼 {data.get('profession')}\n🏢 {data.get('organization', '-')}\n🆔 ID: {msg.from_user.id}"
-            
+            admin_text = f"""
+🆕 *YANGI ARIZA!*
+
+👤 *Ism:* {data.get('name')} {data.get('lastname')}
+📅 *Tug'ilgan kun:* {data.get('birth_date')}
+📱 *Telefon:* {data.get('phone')}
+📍 *Viloyat:* {data.get('region')}
+👨‍💼 *Kasb:* {data.get('profession')}
+🏢 *Tashkilot:* {data.get('organization', '-')}
+📜 *Diplom:* {data.get('diploma_specialty', '-')}
+🆔 *ID:* {msg.from_user.id}
+
+📎 *Kvitansiya quyida:*
+"""
             if msg.photo:
-                await bot.send_photo(aid, photo=file_id, caption=text, parse_mode="Markdown")
+                await bot.send_photo(admin_id, photo=file_id, caption=admin_text, parse_mode="Markdown")
             else:
-                await bot.send_document(aid, document=file_id, caption=text, parse_mode="Markdown")
+                await bot.send_document(admin_id, document=file_id, caption=admin_text, parse_mode="Markdown")
             
-            kb = InlineKeyboardMarkup(inline_keyboard=[
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
                 [InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"approve_{msg.from_user.id}"),
                  InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reject_{msg.from_user.id}")]
             ])
-            await bot.send_message(aid, "📝 *Qaror qabul qiling:*", parse_mode="Markdown", reply_markup=kb)
+            await bot.send_message(admin_id, "📝 *Qaror qabul qiling:*", parse_mode="Markdown", reply_markup=keyboard)
+            
         except Exception as e:
-            print(f"Admin xatosi: {e}")
+            print(f"❌ Admin xatosi: {e}")
     
     await state.clear()
 
 @dp.message(Form.receipt)
-async def invalid_receipt(msg):
+async def invalid_receipt(msg: types.Message):
     await msg.answer("❌ Iltimos, kvitansiyani **rasm (photo)** yoki **PDF** formatida yuboring!", parse_mode="Markdown")
 
 @dp.callback_query(F.data.startswith("approve_"))
-async def approve(call):
+async def approve_user(call: types.CallbackQuery):
     if call.from_user.id not in ADMIN_IDS:
         await call.answer("❌ Siz admin emassiz!", show_alert=True)
         return
-    uid = int(call.data.split("_")[1])
-    update_status(uid, "approved")
+    
+    user_id = int(call.data.split("_")[1])
+    update_status(user_id, "approved")
+    
     await bot.send_message(
-        uid,
+        user_id,
         f"✅ *Tabriklaymiz!* To'lovingiz tasdiqlandi.\n\n"
         f"🔐 *Yopiq guruhga qo'shilish havolasi:*\n{GROUP_INVITE_LINK}\n\n"
-        f"{SOCIAL_LINKS}",
+        f"{SOCIAL_LINKS}\n\n"
+        f"Ekspertlik kurslari muvaffaqiyatli boshlanadi!",
         parse_mode="Markdown",
         disable_web_page_preview=True
     )
-    await call.message.edit_text(f"✅ {uid} ID li foydalanuvchi TASDIQLANDI!")
+    await call.message.edit_text(f"✅ {user_id} ID li foydalanuvchi TASDIQLANDI!")
     await call.answer()
 
 @dp.callback_query(F.data.startswith("reject_"))
-async def reject(call):
+async def reject_user(call: types.CallbackQuery):
     if call.from_user.id not in ADMIN_IDS:
         await call.answer("❌ Siz admin emassiz!", show_alert=True)
         return
-    uid = int(call.data.split("_")[1])
-    update_status(uid, "rejected")
+    
+    user_id = int(call.data.split("_")[1])
+    update_status(user_id, "rejected")
+    
     await bot.send_message(
-        uid,
+        user_id,
         "❌ *Kechirasiz!* To'lovingiz tasdiqlanmadi.\n\n"
         "Iltimos, to'g'ri to'lov kvitansiyasini yuboring yoki qo'llab-quvvatlash xizmatiga murojaat qiling.\n\n"
         "📞 Telefon: +998 93 340 40 80",
         parse_mode="Markdown"
     )
-    await call.message.edit_text(f"❌ {uid} ID li foydalanuvchi RAD ETILDI!")
+    await call.message.edit_text(f"❌ {user_id} ID li foydalanuvchi RAD ETILDI!")
     await call.answer()
 
 @dp.message(Command("admin"))
-async def admin_cmd(msg):
+async def admin_panel(msg: types.Message):
     if msg.from_user.id not in ADMIN_IDS:
         await msg.answer("❌ Siz admin emassiz!")
         return
-    pending = get_pending()
-    if not pending:
+    
+    pending_users = get_pending()
+    
+    if not pending_users:
         await msg.answer("📭 *Kutilayotgan arizalar yo'q*", parse_mode="Markdown")
         return
+    
     text = "📋 *Kutilayotgan arizalar:*\n\n"
-    for u in pending:
-        text += f"🆔 {u[0]} | {u[1]} {u[2]} | {u[3]}\n"
+    for user in pending_users:
+        text += f"🆔 {user[0]} | {user[1]} {user[2]} | {user[3]}\n"
+    
     await msg.answer(text, parse_mode="Markdown")
 
+# ========== HEALTH CHECK ENDPOINT ==========
+async def health_check(request):
+    """Sog'likni tekshirish uchun endpoint"""
+    return web.Response(text="OK", status=200)
+
+# ========== WEBHOOK VA SERVER ==========
 async def on_startup(app):
     webhook_full_url = f"{WEBHOOK_URL}/webhook"
     await bot.set_webhook(webhook_full_url)
@@ -398,8 +498,12 @@ async def on_shutdown(app):
 
 def main():
     app = web.Application()
+    
+    # Health check endpoint (Render uchun majburiy)
+    app.router.add_get("/health", health_check)
+    
+    # Webhook handler
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
-    app.router.add_get("/health", lambda r: web.Response(text="OK"))
     
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
