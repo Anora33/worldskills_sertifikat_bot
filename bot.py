@@ -50,29 +50,51 @@ SOCIAL_LINKS = """
 
 DB_PATH = "users.db"
 
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-                                             user_id INTEGER PRIMARY KEY,
-                                             first_name TEXT,
-                                             last_name TEXT,
-                                             birth_date TEXT,
-                                             phone_number TEXT,
-                                             region TEXT,
-                                             profession TEXT,
-                                             profession_en TEXT,
-                                             organization TEXT,
-                                             diploma_specialty TEXT,
-                                             receipt_file_id TEXT,
-                                             receipt_status TEXT DEFAULT 'pending',
-                                             registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+                   CREATE TABLE IF NOT EXISTS users
+                   (
+                       user_id
+                       INTEGER
+                       PRIMARY
+                       KEY,
+                       first_name
+                       TEXT,
+                       last_name
+                       TEXT,
+                       birth_date
+                       TEXT,
+                       phone_number
+                       TEXT,
+                       region
+                       TEXT,
+                       profession
+                       TEXT,
+                       profession_en
+                       TEXT,
+                       organization
+                       TEXT,
+                       diploma_specialty
+                       TEXT,
+                       receipt_file_id
+                       TEXT,
+                       receipt_status
+                       TEXT
+                       DEFAULT
+                       'pending',
+                       registered_at
+                       TIMESTAMP
+                       DEFAULT
+                       CURRENT_TIMESTAMP
+                   )
+                   ''')
     conn.commit()
     conn.close()
     print("✅ DB tayyor!")
+
 
 def save_user(user_id, data):
     conn = sqlite3.connect(DB_PATH)
@@ -90,6 +112,7 @@ def save_user(user_id, data):
     conn.commit()
     conn.close()
 
+
 def update_status(user_id, status):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -97,13 +120,16 @@ def update_status(user_id, status):
     conn.commit()
     conn.close()
 
+
 def get_pending():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id, first_name, last_name, phone_number, profession FROM users WHERE receipt_status = 'pending'")
+    cursor.execute(
+        "SELECT user_id, first_name, last_name, phone_number, profession FROM users WHERE receipt_status = 'pending'")
     res = cursor.fetchall()
     conn.close()
     return res
+
 
 def make_form_link(data):
     full_name = f"{data.get('lastname', '')} {data.get('name', '')}"
@@ -124,14 +150,21 @@ def make_form_link(data):
     p = "&".join([f"{k}={quote(str(v))}" for k, v in params.items() if v])
     return f"{GOOGLE_FORM_URL}?usp=pp_url&{p}"
 
+
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 init_db()
 
-PROFESSIONS_UZ = ["1. Elektromontaj", "2. Payvandlash", "3. Santexnika", "4. Quruq qurilish", "5. Kompyuter grafikasi", "6. Modalar texnologiyasi", "7. Avtomobillarga xizmat", "8. Sartaroshlik", "9. Tibbiy g'amxo'rlik", "10. Oshpazlik"]
-PROFESSIONS_EN = ["1. Electrical Installation", "2. Welding", "3. Plumbing", "4. Dry Construction", "5. Computer Graphics", "6. Fashion Technology", "7. Automotive Maintenance", "8. Hairdressing", "9. Medical Care", "10. Culinary Arts"]
-REGIONS = ["Qoraqalpog'iston", "Andijon", "Buxoro", "Jizzax", "Qashqadaryo", "Navoiy", "Namangan", "Samarqand", "Sirdaryo", "Surxondaryo", "Toshkent vil.", "Farg'ona", "Xorazm", "Toshkent sh."]
+PROFESSIONS_UZ = ["1. Elektromontaj", "2. Payvandlash", "3. Santexnika", "4. Quruq qurilish", "5. Kompyuter grafikasi",
+                  "6. Modalar texnologiyasi", "7. Avtomobillarga xizmat", "8. Sartaroshlik", "9. Tibbiy g'amxo'rlik",
+                  "10. Oshpazlik"]
+PROFESSIONS_EN = ["1. Electrical Installation", "2. Welding", "3. Plumbing", "4. Dry Construction",
+                  "5. Computer Graphics", "6. Fashion Technology", "7. Automotive Maintenance", "8. Hairdressing",
+                  "9. Medical Care", "10. Culinary Arts"]
+REGIONS = ["Qoraqalpog'iston", "Andijon", "Buxoro", "Jizzax", "Qashqadaryo", "Navoiy", "Namangan", "Samarqand",
+           "Sirdaryo", "Surxondaryo", "Toshkent vil.", "Farg'ona", "Xorazm", "Toshkent sh."]
+
 
 class Form(StatesGroup):
     name = State()
@@ -145,9 +178,11 @@ class Form(StatesGroup):
     diploma_specialty = State()
     receipt = State()
 
+
 def phone_kb():
     btn = KeyboardButton(text="📱 Telefon raqamni yuborish", request_contact=True)
     return ReplyKeyboardMarkup(keyboard=[[btn]], resize_keyboard=True)
+
 
 def lang_kb():
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -155,17 +190,24 @@ def lang_kb():
          InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")]
     ])
 
+
 def prof_kb(lang="uz"):
     proflar = PROFESSIONS_UZ if lang == "uz" else PROFESSIONS_EN
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=p, callback_data=f"prof_{i}")] for i, p in enumerate(proflar)])
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=p, callback_data=f"prof_{i}")] for i, p in enumerate(proflar)])
+
 
 def region_kb():
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=r, callback_data=f"region_{i}")] for i, r in enumerate(REGIONS)])
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=r, callback_data=f"region_{i}")] for i, r in enumerate(REGIONS)])
+
 
 @dp.message(Command("start"))
 async def start(msg, state):
-    await msg.answer("🏆 *WorldSkills botiga xush kelibsiz!*\n\n✏️ *Ismingizni kiriting:*\n_(Masalan: Jahongir)_", parse_mode="Markdown")
+    await msg.answer("🏆 *WorldSkills botiga xush kelibsiz!*\n\n✏️ *Ismingizni kiriting:*\n_(Masalan: Jahongir)_",
+                     parse_mode="Markdown")
     await state.set_state(Form.name)
+
 
 @dp.message(Form.name)
 async def get_name(msg, state):
@@ -176,6 +218,7 @@ async def get_name(msg, state):
     await msg.answer("✏️ *Familiyangizni kiriting:*\n_(Masalan: Karimov)_", parse_mode="Markdown")
     await state.set_state(Form.lastname)
 
+
 @dp.message(Form.lastname)
 async def get_lastname(msg, state):
     if len(msg.text.strip()) < 2:
@@ -185,20 +228,24 @@ async def get_lastname(msg, state):
     await msg.answer("📅 *Tug'ilgan kuningizni kiriting:*\n_(Masalan: 22.01.1989)_", parse_mode="Markdown")
     await state.set_state(Form.birth_date)
 
+
 @dp.message(Form.birth_date)
 async def get_birth(msg, state):
     if not re.match(r'\d{2}\.\d{2}\.\d{4}', msg.text.strip()):
         await msg.answer("❌ Noto'g'ri format! Iltimos, 22.01.1989 ko'rinishida yozing.")
         return
     await state.update_data(birth_date=msg.text.strip())
-    await msg.answer("📱 *Telefon raqamingizni yuboring:*\n\n✅ Pastdagi tugmani bosing YOKI qo'lda yozing", reply_markup=phone_kb(), parse_mode="Markdown")
+    await msg.answer("📱 *Telefon raqamingizni yuboring:*\n\n✅ Pastdagi tugmani bosing YOKI qo'lda yozing",
+                     reply_markup=phone_kb(), parse_mode="Markdown")
     await state.set_state(Form.phone)
+
 
 @dp.message(Form.phone, F.contact)
 async def get_phone_contact(msg, state):
     await state.update_data(phone=msg.contact.phone_number)
     await msg.answer("📍 *Viloyatingizni tanlang:*", parse_mode="Markdown", reply_markup=region_kb())
     await state.set_state(Form.region)
+
 
 @dp.message(Form.phone)
 async def get_phone_manual(msg, state):
@@ -212,6 +259,7 @@ async def get_phone_manual(msg, state):
     await msg.answer("📍 *Viloyatingizni tanlang:*", parse_mode="Markdown", reply_markup=region_kb())
     await state.set_state(Form.region)
 
+
 @dp.callback_query(Form.region, F.data.startswith("region_"))
 async def get_region(call, state):
     idx = int(call.data.split("_")[1])
@@ -221,6 +269,7 @@ async def get_region(call, state):
     await state.set_state(Form.language)
     await call.answer()
 
+
 @dp.callback_query(Form.language, F.data.startswith("lang_"))
 async def get_lang(call, state):
     lang = "uz" if call.data == "lang_uz" else "en"
@@ -229,6 +278,7 @@ async def get_lang(call, state):
     await call.message.edit_text(text, parse_mode="Markdown", reply_markup=prof_kb(lang))
     await state.set_state(Form.profession)
     await call.answer()
+
 
 @dp.callback_query(Form.profession, F.data.startswith("prof_"))
 async def get_prof(call, state):
@@ -243,11 +293,14 @@ async def get_prof(call, state):
     await state.set_state(Form.organization)
     await call.answer()
 
+
 @dp.message(Form.organization)
 async def get_org(msg, state):
     await state.update_data(organization=msg.text.strip())
-    await msg.answer("📜 *Diplom bo'yicha mutaxassisligingiz (agar mavjud bo'lsa, bo'sh qoldiring):*", parse_mode="Markdown")
+    await msg.answer("📜 *Diplom bo'yicha mutaxassisligingiz (agar mavjud bo'lsa, bo'sh qoldiring):*",
+                     parse_mode="Markdown")
     await state.set_state(Form.diploma_specialty)
+
 
 @dp.message(Form.diploma_specialty)
 async def get_diploma(msg, state):
@@ -256,8 +309,6 @@ async def get_diploma(msg, state):
         diploma = ""
     await state.update_data(diploma_specialty=diploma)
     payment = """
-payment_text = """
-payment_text = """
 💰 *Milliy Worldskills Ekspert-2026*
 
 📚 *O'qish puli:* 1 000 000 so'm
@@ -275,7 +326,7 @@ payment_text = """
 
 📝 *To'lov maqsadi:* Ekspertlikka o'qish uchun
 
-📄 *Shartnoma raqami:* 22011956 (O'zingizning tug'ilgan sanaoyyilingiz)
+📄 *Shartnoma raqami:* 22011956 (Tug'ilgan kuningiz: kun.oy.yil)
 
 📅 *Sana:* 22.04.2026
 
@@ -283,22 +334,11 @@ payment_text = """
 
 🔐 *Kvitansiya tekshirilgandan so'ng siz yopiq guruhga qo'shilasiz.*
 """
-
-
-@dp.message(Form.diploma_specialty)
-async def get_diploma(msg, state):
-    diploma = msg.text.strip()
-    if diploma == "-":
-        diploma = ""
-    await state.update_data(diploma_specialty=diploma)
-    payment = """
-    💰 *Milliy Worldskills Ekspert-2026*
-    ...
-    """
-    await msg.answer(payment,
-                     parse_mode="Markdown")  # <-- Bu qatorning oldida 4 ta probel (yoki bitta tab) bo‘lishi kerak
-    await msg.answer("📎 *Kvitansiyangizni yuklang...*", parse_mode="Markdown")
+    await msg.answer(payment, parse_mode="Markdown")
+    await msg.answer("📎 *Kvitansiyangizni yuklang (rasm yoki PDF formatida):*", parse_mode="Markdown")
     await state.set_state(Form.receipt)
+
+
 @dp.message(Form.receipt, F.photo | F.document)
 async def get_receipt(msg, state):
     data = await state.get_data()
@@ -328,7 +368,6 @@ async def get_receipt(msg, state):
         disable_web_page_preview=True
     )
 
-    # Adminlarga xabar
     for aid in ADMIN_IDS:
         try:
             text = f"🆕 *YANGI ARIZA!*\n\n👤 {data.get('name')} {data.get('lastname')}\n📅 {data.get('birth_date')}\n📱 {data.get('phone')}\n📍 {data.get('region')}\n👨‍💼 {data.get('profession')}\n🏢 {data.get('organization', '-')}\n🆔 ID: {msg.from_user.id}"
@@ -348,9 +387,11 @@ async def get_receipt(msg, state):
 
     await state.clear()
 
+
 @dp.message(Form.receipt)
 async def invalid_receipt(msg):
     await msg.answer("❌ Iltimos, kvitansiyani **rasm (photo)** yoki **PDF** formatida yuboring!", parse_mode="Markdown")
+
 
 @dp.callback_query(F.data.startswith("approve_"))
 async def approve(call):
@@ -370,6 +411,7 @@ async def approve(call):
     await call.message.edit_text(f"✅ {uid} ID li foydalanuvchi TASDIQLANDI!")
     await call.answer()
 
+
 @dp.callback_query(F.data.startswith("reject_"))
 async def reject(call):
     if call.from_user.id not in ADMIN_IDS:
@@ -387,6 +429,7 @@ async def reject(call):
     await call.message.edit_text(f"❌ {uid} ID li foydalanuvchi RAD ETILDI!")
     await call.answer()
 
+
 @dp.message(Command("admin"))
 async def admin_cmd(msg):
     if msg.from_user.id not in ADMIN_IDS:
@@ -401,16 +444,21 @@ async def admin_cmd(msg):
         text += f"🆔 {u[0]} | {u[1]} {u[2]} | {u[3]}\n"
     await msg.answer(text, parse_mode="Markdown")
 
-# ========== WEBHOOK VA SERVER ==========
-async def on_startup(app):
+
+# ========== WEBHOOK VA SERVER (TUZATILGAN QISM) ==========
+async def on_startup(app: web.Application):
+    """Webhook sozlamalari - app argumenti qo'shildi"""
     webhook_full_url = f"{WEBHOOK_URL}/webhook"
     await bot.set_webhook(webhook_full_url)
     print(f"✅ Webhook sozlandi: {webhook_full_url}")
 
-async def on_shutdown(app):
+
+async def on_shutdown(app: web.Application):
+    """Bot to'xtaganda webhookni tozalash - app argumenti qo'shildi"""
     await bot.delete_webhook()
     await bot.session.close()
     print("❌ Webhook tozalandi")
+
 
 def main():
     app = web.Application()
@@ -423,6 +471,7 @@ def main():
     port = int(os.environ.get("PORT", 10000))
     print(f"🚀 Server {port} portda ishga tushmoqda...")
     web.run_app(app, host="0.0.0.0", port=port)
+
 
 if __name__ == "__main__":
     main()
