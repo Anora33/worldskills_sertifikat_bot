@@ -376,12 +376,12 @@ async def admin_cmd(msg):
     await msg.answer(text, parse_mode="Markdown")
 
 # ========== WEBHOOK VA SERVER ==========
-async def on_startup():
+async def on_startup(app):
     webhook_full_url = f"{WEBHOOK_URL}/webhook"
     await bot.set_webhook(webhook_full_url)
     print(f"✅ Webhook sozlandi: {webhook_full_url}")
 
-async def on_shutdown():
+async def on_shutdown(app):
     await bot.delete_webhook()
     await bot.session.close()
     print("❌ Webhook tozalandi")
