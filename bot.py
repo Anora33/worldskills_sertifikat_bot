@@ -480,12 +480,10 @@ async def admin_panel(msg: types.Message):
     
     await msg.answer(text, parse_mode="Markdown")
 
-
 # ========== HEALTH CHECK ENDPOINT ==========
 async def health_check(request):
     """Sog'likni tekshirish uchun endpoint - Render uchun majburiy"""
     return web.Response(text="OK", status=200)
-
 
 # ========== WEBHOOK VA SERVER ==========
 async def on_startup(app):
@@ -493,30 +491,33 @@ async def on_startup(app):
     await bot.set_webhook(webhook_url)
     print(f"✅ Webhook sozlandi: {webhook_url}")
 
-
 async def on_shutdown(app):
     await bot.delete_webhook()
     await bot.session.close()
     print("❌ Webhook tozalandi")
 
-
 def main():
     app = web.Application()
-    app.router.add_get("/health", health_check)  # health_check endi mavjud!
+    
+    # 1. Health check endpoint (Render uchun)
+    app.router.add_get("/health", health_check)
+    
+    # 2. Webhook handler
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
-
+    
+    # 3. Asosiy sahifa
     async def index(request):
         return web.Response(text="Bot is running. Use /webhook for Telegram updates.", status=200)
-
     app.router.add_get("/", index)
-
+    
+    # 4. Startup va shutdown
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
-
+    
+    # 5. Serverni ishga tushirish
     port = int(os.environ.get("PORT", 10000))
     print(f"🚀 Server {port} portda ishga tushmoqda...")
     web.run_app(app, host="0.0.0.0", port=port)
-
 
 if __name__ == "__main__":
     main()
