@@ -480,34 +480,11 @@ async def admin_panel(msg: types.Message):
     
     await msg.answer(text, parse_mode="Markdown")
 
-# ========== HEALTH CHECK ENDPOINT ==========
-async def health_check(request):
-    """Sog'likni tekshirish uchun endpoint - Render uchun majburiy"""
-    return web.Response(text="OK", status=200)
-
-
-# ========== WEBHOOK VA SERVER ==========
-async def keep_webhook_alive():
-    """Har 30 daqiqada webhook holatini tekshiradi va kerak bo'lsa qayta o'rnatadi"""
-    while True:
-        await asyncio.sleep(1800)  # 30 daqiqa
-        try:
-            info = await bot.get_webhook_info()
-            if not info.url:
-                await bot.set_webhook(f"{WEBHOOK_URL}/webhook")
-                print("⚠️ Webhook qayta o'rnatildi")
-        except Exception as e:
-            print(f"❌ Webhook tekshiruvida xato: {e}")
-
-
+# ========== WEBHOOK VA SERVER (SODDA VA ISHONCHLI) ==========
 async def on_startup(app):
-    """Startupda webhookni o'rnatadi va keep-alive vazifasini ishga tushiradi"""
     webhook_url = f"{WEBHOOK_URL}/webhook"
     await bot.set_webhook(webhook_url)
     print(f"✅ Webhook sozlandi: {webhook_url}")
-    # Keep-alive vazifasini backgroundda ishga tushirish
-    asyncio.create_task(keep_webhook_alive())
-    print("✅ Webhook keep-alive vazifasi ishga tushdi")
 
 
 async def on_shutdown(app):
@@ -518,24 +495,17 @@ async def on_shutdown(app):
 
 def main():
     app = web.Application()
-
-    # 1. Health check endpoint (Render uchun)
     app.router.add_get("/health", health_check)
-
-    # 2. Webhook handler
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
 
-    # 3. Asosiy sahifa
     async def index(request):
         return web.Response(text="Bot is running. Use /webhook for Telegram updates.", status=200)
 
     app.router.add_get("/", index)
 
-    # 4. Startup va shutdown
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
 
-    # 5. Serverni ishga tushirish
     port = int(os.environ.get("PORT", 10000))
     print(f"🚀 Server {port} portda ishga tushmoqda...")
     web.run_app(app, host="0.0.0.0", port=port)
