@@ -485,56 +485,56 @@ async def health_check(request):
     """Sog'likni tekshirish uchun endpoint - Render uchun majburiy"""
     return web.Response(text="OK", status=200)
 
-# ========== WEBHOOK VA SERVER ==========
-async def keep_webhook_alive():           # 0 probel
-    while True:                           # 4 probel
-        await asyncio.sleep(1800)         # 8 probel (4+4)
-        try:                              # 8 probel
-            webhook_info = await bot.get_webhook_info()  # 12 probel
-            if not webhook_info.url:      # 12 probel
-                await bot.set_webhook(...) # 16 probel
-                print("...")              # 16 probel
-        except Exception as e:            # 8 probel
-            print(f"...")                 # 12 probel
+
+# ========= WEBHOOK VA SERVER =========
+async def keep_webhook_alive():
+    """Har 30 daqiqada webhook holatini tekshiradi va kerak bo'lsa qayta o'rnatadi"""
+    while True:
+        await asyncio.sleep(1800)  # 30 daqiqa
+        try:
+            webhook_info = await bot.get_webhook_info()
+            if not webhook_info.url:
+                await bot.set_webhook(f"{WEBHOOK_URL}/webhook")
+                print("⚠️ Webhook qayta o'rnatildi")
+        except Exception as e:
+            print(f"❌ Webhook tekshiruvida xato: {e}")
+
 
 async def on_startup(app):
     webhook_full_url = f"{WEBHOOK_URL}/webhook"
     await bot.set_webhook(webhook_full_url)
     print(f"✅ Webhook sozlandi: {webhook_full_url}")
 
+
 async def on_shutdown(app):
     await bot.delete_webhook()
     await bot.session.close()
     print("❌ Webhook tozalandi")
 
+
 def main():
     app = web.Application()
-    
-    # 1. Health check endpoint (Render uchun)
+
     app.router.add_get("/health", health_check)
-    
-    # 2. Webhook handler
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
-    
-    # 3. Asosiy sahifaga oddiy xabar
+
     async def index(request):
         return web.Response(text="Bot is running. Use /webhook for Telegram updates.", status=200)
+
     app.router.add_get("/", index)
-    
-    # 4. Webhook keep-alive vazifasini ishga tushiruvchi startup funksiyasi
+
     async def startup_with_keep_alive():
         await on_startup(app)
         asyncio.create_task(keep_webhook_alive())
         print("✅ Webhook keep-alive vazifasi ishga tushdi")
-    
-    # 5. Startup va shutdown eventlari
+
     app.on_startup.append(startup_with_keep_alive)
     app.on_shutdown.append(on_shutdown)
-    
-    # 6. Serverni ishga tushirish
+
     port = int(os.environ.get("PORT", 10000))
     print(f"🚀 Server {port} portda ishga tushmoqda...")
     web.run_app(app, host="0.0.0.0", port=port)
+
 
 if __name__ == "__main__":
     main()
