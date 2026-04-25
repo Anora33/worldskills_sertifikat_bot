@@ -480,7 +480,14 @@ async def admin_panel(msg: types.Message):
     
     await msg.answer(text, parse_mode="Markdown")
 
-# ========== WEBHOOK VA SERVER (SODDA VA ISHONCHLI) ==========
+
+# ========== HEALTH CHECK ENDPOINT ==========
+async def health_check(request):
+    """Sog'likni tekshirish uchun endpoint - Render uchun majburiy"""
+    return web.Response(text="OK", status=200)
+
+
+# ========== WEBHOOK VA SERVER ==========
 async def on_startup(app):
     webhook_url = f"{WEBHOOK_URL}/webhook"
     await bot.set_webhook(webhook_url)
@@ -495,7 +502,7 @@ async def on_shutdown(app):
 
 def main():
     app = web.Application()
-    app.router.add_get("/health", health_check)
+    app.router.add_get("/health", health_check)  # health_check endi mavjud!
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
 
     async def index(request):
