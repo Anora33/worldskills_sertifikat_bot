@@ -486,14 +486,14 @@ async def health_check(request):
     return web.Response(text="OK", status=200)
 
 
-# ========= WEBHOOK VA SERVER =========
+# ========== WEBHOOK VA SERVER ==========
 async def keep_webhook_alive():
     """Har 30 daqiqada webhook holatini tekshiradi va kerak bo'lsa qayta o'rnatadi"""
     while True:
         await asyncio.sleep(1800)  # 30 daqiqa
         try:
-            webhook_info = await bot.get_webhook_info()
-            if not webhook_info.url:
+            info = await bot.get_webhook_info()
+            if not info.url:
                 await bot.set_webhook(f"{WEBHOOK_URL}/webhook")
                 print("⚠️ Webhook qayta o'rnatildi")
         except Exception as e:
@@ -501,9 +501,13 @@ async def keep_webhook_alive():
 
 
 async def on_startup(app):
-    webhook_full_url = f"{WEBHOOK_URL}/webhook"
-    await bot.set_webhook(webhook_full_url)
-    print(f"✅ Webhook sozlandi: {webhook_full_url}")
+    """Startupda webhookni o'rnatadi va keep-alive vazifasini ishga tushiradi"""
+    webhook_url = f"{WEBHOOK_URL}/webhook"
+    await bot.set_webhook(webhook_url)
+    print(f"✅ Webhook sozlandi: {webhook_url}")
+    # Keep-alive vazifasini backgroundda ishga tushirish
+    asyncio.create_task(keep_webhook_alive())
+    print("✅ Webhook keep-alive vazifasi ishga tushdi")
 
 
 async def on_shutdown(app):
@@ -515,22 +519,23 @@ async def on_shutdown(app):
 def main():
     app = web.Application()
 
+    # 1. Health check endpoint (Render uchun)
     app.router.add_get("/health", health_check)
+
+    # 2. Webhook handler
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
 
+    # 3. Asosiy sahifa
     async def index(request):
         return web.Response(text="Bot is running. Use /webhook for Telegram updates.", status=200)
 
     app.router.add_get("/", index)
 
-    async def startup_with_keep_alive():
-        await on_startup(app)
-        asyncio.create_task(keep_webhook_alive())
-        print("✅ Webhook keep-alive vazifasi ishga tushdi")
-
-    app.on_startup.append(startup_with_keep_alive)
+    # 4. Startup va shutdown
+    app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
 
+    # 5. Serverni ishga tushirish
     port = int(os.environ.get("PORT", 10000))
     print(f"🚀 Server {port} portda ishga tushmoqda...")
     web.run_app(app, host="0.0.0.0", port=port)
