@@ -1,4 +1,4 @@
-name: Render Keep-Alive Ping
+name: Render Keep-Alive
 
 on:
   schedule:
@@ -11,6 +11,4 @@ jobs:
     steps:
       - name: Send ping to Render bot
         run: |
-          echo "Pinging Render bot..."
           curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" "https://worldskills-sertifikat-bot.onrender.com/health"
-          echo "Ping completed at $(date)"
