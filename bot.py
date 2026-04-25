@@ -486,17 +486,16 @@ async def health_check(request):
     return web.Response(text="OK", status=200)
 
 # ========== WEBHOOK VA SERVER ==========
-async def keep_webhook_alive():
-    """Har 30 daqiqada webhook holatini tekshiradi va kerak bo'lsa qayta o'rnatadi"""
-    while True:
-        await asyncio.sleep(1800)  # 30 daqiqa
-        try:
-            webhook_info = await bot.get_webhook_info()
-            if not webhook_info.url:
-                await bot.set_webhook(f"{WEBHOOK_URL}/webhook")
-                print("⚠️ Webhook qayta o'rnatildi")
-        except Exception as e:
-            print(f"❌ Webhook tekshiruvida xato: {e}")
+async def keep_webhook_alive():           # 0 probel
+    while True:                           # 4 probel
+        await asyncio.sleep(1800)         # 8 probel (4+4)
+        try:                              # 8 probel
+            webhook_info = await bot.get_webhook_info()  # 12 probel
+            if not webhook_info.url:      # 12 probel
+                await bot.set_webhook(...) # 16 probel
+                print("...")              # 16 probel
+        except Exception as e:            # 8 probel
+            print(f"...")                 # 12 probel
 
 async def on_startup(app):
     webhook_full_url = f"{WEBHOOK_URL}/webhook"
